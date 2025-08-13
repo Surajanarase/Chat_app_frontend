@@ -18,7 +18,7 @@
     } else {
       errors.set({});
       console.log("Form data ready to send:", { email, password });
-      // Later: send to backend via fetch()
+      //Later: send to backend via fetch()
     }
   };
 </script>
