@@ -11,7 +11,7 @@
   <div class="flex-1 overflow-y-auto">
     {#each users as user}
       <div class="flex items-center p-3 hover:bg-gray-800 cursor-pointer">
-        <img src={user.avatar} alt={user.name} class="w-10 h-10 rounded-full mr-3" />
+        <img src=Image.jpeg alt={user.name} class="w-10 h-10 rounded-full mr-3" />
         <div>
           <div class="font-medium">{user.name}</div>
           <div class="text-sm text-gray-400 truncate w-40">{user.lastMessage}</div>

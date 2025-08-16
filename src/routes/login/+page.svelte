@@ -1,78 +1,111 @@
 <script lang="ts">
-  import { loginSchema } from '$lib/validation/loginSchema';
   import { writable } from 'svelte/store';
+  import { loginSchema } from '$lib/validation/loginSchema';
+  import { goto } from '$app/navigation';
+  import { setSession } from '$lib/stores/auth';
 
   let email = '';
   let password = '';
-  let errors = writable<{ email?: string; password?: string }>({});
 
-  const handleLogin = () => {
+  let errors = writable<{ [key: string]: string }>({});
+  let loading = writable(false);
+
+  const handleLogin = async () => {
+    // 1️⃣ Validate form
     const { error } = loginSchema.validate({ email, password }, { abortEarly: false });
 
     if (error) {
-      let errObj: Record<string, string> = {};
+      const errObj: Record<string, string> = {};
       error.details.forEach((e) => {
         errObj[e.path[0] as string] = e.message;
       });
       errors.set(errObj);
-    } else {
-      errors.set({});
-      console.log("Form data ready to send:", { email, password });
-      //Later: send to backend via fetch()
+      return;
+    }
+
+    errors.set({});
+    loading.set(true);
+
+    try {
+      // 2️⃣ Call backend login route
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {}
+
+      if (!res.ok) {
+        errors.set({ general: data.error || 'Login failed' });
+        return;
+      }
+
+      // 3️⃣ Store JWT token in store & localStorage
+      setSession(data.token, null); // Pass user object if backend provides it
+
+      // 4️⃣ Redirect to chat screen
+      goto('/chat');
+    } catch (err) {
+      console.error('Login error:', err);
+      errors.set({ general: 'Something went wrong, try again.' });
+    } finally {
+      loading.set(false);
     }
   };
 </script>
 
-<div class="flex flex-col items-center">
-  <img src="/logo.jpg" alt="Namaste Logo" class="w-60 h-30" />
-  <h1 class="text-3xl font-bold text-gray-800">नमस्ते,Welcome!!!</h1>
-</div>
+<div class="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+  <div class="bg-gray-800 p-8 rounded-lg shadow-md w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-6 text-center">Login</h1>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-100">
-  <div class="bg-white rounded-lg shadow p-8 w-full max-w-sm transform -translate-y-16">
-    <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+    <form on:submit|preventDefault={handleLogin} class="space-y-4">
+      <!-- Email -->
+      <div>
+        <label for="email" class="block mb-1">Email</label>
+        <input
+          id="email"
+          type="email"
+          bind:value={email}
+          placeholder="Enter email"
+          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
+        />
+        {#if $errors.email}
+          <p class="text-red-400 text-sm mt-1">{$errors.email}</p>
+        {/if}
+      </div>
 
-    <!-- Email -->
-    <div class="mb-4">
-      <label for="email" class="block text-sm font-medium mb-1">Email</label>
-      <input
-        id="email"
-        type="email"
-        bind:value={email}
-        class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="Enter your email"
-      />
-      {#if $errors.email}
-        <p class="text-red-500 text-sm mt-1">{$errors.email}</p>
+      <!-- Password -->
+      <div>
+        <label for="password" class="block mb-1">Password</label>
+        <input
+          id="password"
+          type="password"
+          bind:value={password}
+          placeholder="Enter password"
+          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
+        />
+        {#if $errors.password}
+          <p class="text-red-400 text-sm mt-1">{$errors.password}</p>
+        {/if}
+      </div>
+
+      <!-- General errors -->
+      {#if $errors.general}
+        <p class="text-red-400 text-center mt-2">{$errors.general}</p>
       {/if}
-    </div>
 
-    <!-- Password -->
-    <div class="mb-6">
-      <label for="password" class="block text-sm font-medium mb-1">Password</label>
-      <input
-        id="password"
-        type="password"
-        bind:value={password}
-        class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="Enter your password"
-      />
-      {#if $errors.password}
-        <p class="text-red-500 text-sm mt-1">{$errors.password}</p>
-      {/if}
-    </div>
-
-    <!-- Login Button -->
-    <button 
-      on:click={handleLogin}
-      class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
-    >
-      Login
-    </button>
-
-    <p class="text-sm text-center mt-4">
-      Don’t have an account?
-      <a href="/register" class="text-blue-600 hover:underline">Register</a>
-    </p>
+      <!-- Submit button -->
+      <button
+        type="submit"
+        class="w-full p-2 mt-4 bg-blue-600 hover:bg-blue-700 rounded font-semibold"
+        disabled={$loading}
+      >
+        {#if $loading}Logging in...{:else}Login{/if}
+      </button>
+    </form>
   </div>
 </div>
