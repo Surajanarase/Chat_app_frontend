@@ -11,7 +11,7 @@
   let loading = writable(false);
 
   const handleLogin = async () => {
-    // 1️⃣ Validate form
+    //  Validate form
     const { error } = loginSchema.validate({ email, password }, { abortEarly: false });
 
     if (error) {
@@ -27,7 +27,7 @@
     loading.set(true);
 
     try {
-      // 2️⃣ Call backend login route
+      // 2 Call backend login route
       const res = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,10 +44,10 @@
         return;
       }
 
-      // 3️⃣ Store JWT token in store & localStorage
+      //  Store JWT token in store & localStorage
       setSession(data.token, null); // Pass user object if backend provides it
 
-      // 4️⃣ Redirect to chat screen
+      //  Redirect to chat screen
       goto('/chat');
     } catch (err) {
       console.error('Login error:', err);

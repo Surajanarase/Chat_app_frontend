@@ -13,7 +13,7 @@
   let loading = writable(false);
 
   const handleRegister = async () => {
-    // 1️⃣ Validate form
+    //  Validate form
     const { error } = registerSchema.validate(
       { fullName, email, password, confirmPassword },
       { abortEarly: false }
@@ -32,7 +32,7 @@
     loading.set(true);
 
     try {
-      // 2️⃣ Send data to backend using the expected field name 'username'
+      //  Send data to backend using the expected field name 'username'
       const res = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,10 +47,10 @@
         return;
       }
 
-      // 3️⃣ Save token in localStorage/store if backend returns one
+      //  Save token in localStorage/store if backend returns one
       if (data.token) setSession(data.token, { username: fullName, email });
 
-      // 4️⃣ Redirect to login or chat
+      //  Redirect to login or chat
       alert('Registration successful! Please login.');
       goto('/login');
     } catch (err) {
