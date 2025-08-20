@@ -41,7 +41,7 @@
       text: newMessage
     });
 
-    // ⚡ Removed local append (no duplication now)
+    // Removed local append to prevent duplication
     newMessage = "";
   }
 </script>
