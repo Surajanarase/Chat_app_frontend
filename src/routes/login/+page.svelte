@@ -3,6 +3,7 @@
   import { loginSchema } from '$lib/validation/loginSchema';
   import { goto } from '$app/navigation';
   import { setSession } from '$lib/stores/auth';
+  import { joinUserRoom } from "$lib/socket/socket";
 
   let email = '';
   let password = '';
@@ -45,7 +46,10 @@
       }
 
       //  Store JWT token in store & localStorage
-      setSession(data.token, null); // Pass user object if backend provides it
+      setSession(data.token, data.user); // Pass user object if backend provides it
+
+      //Join socket room after login
+      joinUserRoom(data.user.id);
 
       //  Redirect to chat screen
       goto('/chat');
