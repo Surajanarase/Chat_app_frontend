@@ -6,27 +6,18 @@ export type AuthUser = { id?: number; username?: string; email?: string } | null
 export const authUser = writable<AuthUser>(null);
 export const authToken = writable<string | null>(null);
 
-//New derived store to get userId directly
+// Derived store for userId
 export const userId = derived(authUser, ($authUser) => $authUser?.id ?? null);
 
-// Restore session from localStorage on page load (client-only)
+// Restore session from localStorage only token, not user
 if (typeof window !== "undefined") {
   const t = localStorage.getItem("token");
-  const u = localStorage.getItem("user");
-
   if (t) authToken.set(t);
-  if (u) {
-    try {
-      authUser.set(JSON.parse(u));
-    } catch {
-      authUser.set(null);
-    }
-  }
+  //  Don't restore user blindly from localStorage,
+  // chat/+layout.ts will fetch and set the real user
 }
 
-
- //Save token + user to store and to localStorage (call this after login/register)
-
+// Save token + user to store and to localStorage call this after login/register
 export function setSession(token: string, user: AuthUser) {
   if (typeof window !== "undefined") {
     localStorage.setItem("token", token);
@@ -36,9 +27,7 @@ export function setSession(token: string, user: AuthUser) {
   authUser.set(user);
 }
 
-/**
- * Clear session (call on logout)
- */
+// Clear session (call on logout)
 export function clearSession() {
   if (typeof window !== "undefined") {
     localStorage.removeItem("token");

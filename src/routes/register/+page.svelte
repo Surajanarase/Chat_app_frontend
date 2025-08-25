@@ -2,7 +2,7 @@
   import { writable } from 'svelte/store';
   import { registerSchema } from '$lib/validation/registerSchema';
   import { goto } from '$app/navigation';
-  import { setSession } from '$lib/stores/auth';
+  import { register } from "$lib/api/authApi";
 
   let fullName = '';
   let email = '';
@@ -13,7 +13,7 @@
   let loading = writable(false);
 
   const handleRegister = async () => {
-    //  Validate form
+    // Validate with Joi
     const { error } = registerSchema.validate(
       { fullName, email, password, confirmPassword },
       { abortEarly: false }
@@ -32,30 +32,18 @@
     loading.set(true);
 
     try {
-      //  Send data to backend using the expected field name 'username'
-      const res = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: fullName, email, password })
-      });
+      const data = await register(fullName, email, password);
 
-      let data: any = {};
-      try { data = await res.json(); } catch {}
-
-      if (!res.ok) {
-        errors.set({ general: data.error || 'Registration failed' });
+      if (!data?.token) {
+        errors.set({ general: data.error || "Registration failed" });
         return;
       }
 
-      //  Save token in localStorage/store if backend returns one
-      if (data.token) setSession(data.token, { username: fullName, email });
-
-      //  Redirect to login or chat
-      alert('Registration successful! Please login.');
-      goto('/login');
+      alert("Registration successful! Please login.");
+      goto("/login");
     } catch (err) {
-      console.error('Registration error:', err);
-      errors.set({ general: 'Something went wrong, try again.' });
+      console.error("Registration error:", err);
+      errors.set({ general: "Something went wrong, try again." });
     } finally {
       loading.set(false);
     }
@@ -70,60 +58,37 @@
       <!-- Full Name -->
       <div>
         <label for="fullName" class="block mb-1">Full Name</label>
-        <input
-          id="fullName"
-          bind:value={fullName}
+        <input id="fullName" bind:value={fullName}
           placeholder="Enter full name"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
-        />
-        {#if $errors.fullName}
-          <p class="text-red-400 text-sm mt-1">{$errors.fullName}</p>
-        {/if}
+          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600" />
+        {#if $errors.fullName}<p class="text-red-400 text-sm mt-1">{$errors.fullName}</p>{/if}
       </div>
 
       <!-- Email -->
       <div>
         <label for="email" class="block mb-1">Email</label>
-        <input
-          id="email"
-          bind:value={email}
-          type="email"
+        <input id="email" bind:value={email} type="email"
           placeholder="Enter email"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
-        />
-        {#if $errors.email}
-          <p class="text-red-400 text-sm mt-1">{$errors.email}</p>
-        {/if}
+          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600" />
+        {#if $errors.email}<p class="text-red-400 text-sm mt-1">{$errors.email}</p>{/if}
       </div>
 
       <!-- Password -->
       <div>
         <label for="password" class="block mb-1">Password</label>
-        <input
-          id="password"
-          bind:value={password}
-          type="password"
+        <input id="password" bind:value={password} type="password"
           placeholder="Enter password"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
-        />
-        {#if $errors.password}
-          <p class="text-red-400 text-sm mt-1">{$errors.password}</p>
-        {/if}
+          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600" />
+        {#if $errors.password}<p class="text-red-400 text-sm mt-1">{$errors.password}</p>{/if}
       </div>
 
       <!-- Confirm Password -->
       <div>
         <label for="confirmPassword" class="block mb-1">Confirm Password</label>
-        <input
-          id="confirmPassword"
-          bind:value={confirmPassword}
-          type="password"
+        <input id="confirmPassword" bind:value={confirmPassword} type="password"
           placeholder="Confirm password"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
-        />
-        {#if $errors.confirmPassword}
-          <p class="text-red-400 text-sm mt-1">{$errors.confirmPassword}</p>
-        {/if}
+          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600" />
+        {#if $errors.confirmPassword}<p class="text-red-400 text-sm mt-1">{$errors.confirmPassword}</p>{/if}
       </div>
 
       <!-- General errors -->
@@ -132,11 +97,9 @@
       {/if}
 
       <!-- Submit button -->
-      <button
-        type="submit"
+      <button type="submit"
         class="w-full p-2 mt-4 bg-blue-600 hover:bg-blue-700 rounded font-semibold"
-        disabled={$loading}
-      >
+        disabled={$loading}>
         {#if $loading}Registering...{:else}Register{/if}
       </button>
     </form>
