@@ -12,13 +12,14 @@ export async function fetchUsers(token: string): Promise<User[]> {
 
 export async function fetchMessages(
   token: string,
-  receiverId: number
+  receiverId: string   // 
 ): Promise<Message[]> {
   const res = await fetch(
     `${API_BASE_URL}/chat/messages?receiverId=${receiverId}`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
   );
   if (!res.ok) throw new Error("Failed to fetch messages");
   return res.json();
 }
-

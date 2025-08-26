@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { get } from "svelte/store";
-  import { socket } from "$lib/socket/socket";
+  import { socket, joinUserRoom } from "$lib/socket/socket";
   import { authToken, authUser } from "$lib/stores/auth";
   import { users, messages, activeReceiverId, addMessage } from "$lib/stores/chat";
   import { fetchUsers, fetchMessages } from "$lib/api/chatApi";
@@ -9,14 +9,13 @@
   import ChatBox from "$lib/components/ChatBox.svelte";
   import MessageInput from "$lib/components/MessageInput.svelte";
 
-
   let currentUser: any = null;
 
-  // Load users and setup socket
+  // Setup socket + load users
   onMount(async () => {
     currentUser = get(authUser);
     const token = get(authToken);
-    if (!token) return;
+    if (!token || !currentUser) return;
 
     try {
       const data = await fetchUsers(token);
@@ -25,9 +24,14 @@
       console.error("Failed to load users:", err);
     }
 
+    // Join personal room for receiving messages
+    joinUserRoom(currentUser.id);
+
     // Listen for incoming socket messages
+    socket.off("receiveMessage");
     socket.on("receiveMessage", (msg) => {
       const currentUserId = currentUser?.id;
+      if (!currentUserId) return;
 
       if (msg.sender.id === currentUserId || msg.receiverId === currentUserId) {
         const otherUserId =
@@ -37,14 +41,11 @@
     });
   });
 
-  // Load chat history
-  async function loadChatHistory(userId: number) {
+  // Load chat history from API
+  async function loadChatHistory(userId: string) {
     activeReceiverId.set(userId);
     const token = get(authToken);
     if (!token) return;
-
-    const $messages = get(messages);
-    if ($messages[userId] && $messages[userId].length > 0) return;
 
     try {
       const data = await fetchMessages(token, userId);
@@ -54,7 +55,7 @@
     }
   }
 
-  // Send message via socket
+  // Send message through socket
   function sendMessage(newMessage: string) {
     const receiverId = get(activeReceiverId);
     if (!newMessage.trim() || !currentUser || !receiverId) return;
@@ -66,6 +67,9 @@
       sender: { id: currentUser.id, username: currentUser.username },
     };
 
+    
+
+    // Emit via socket
     socket.emit("sendMessage", msg);
   }
 </script>

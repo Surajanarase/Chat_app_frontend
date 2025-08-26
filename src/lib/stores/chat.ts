@@ -1,29 +1,30 @@
 import { writable } from "svelte/store";
 
-// Define User type (matches backend Prisma model)
+// User type (UUID string IDs now)
 export interface User {
-  id: number;
+  id: string;
   username: string;
-  email?: string;
+  email: string;
 }
 
-// Define Message type (matches backend Message model)
+// Message type
 export interface Message {
-  id?: number;
-  senderId: number;
-  receiverId: number;
+  id?: string;
+  senderId: string;
+  receiverId: string;
   text: string;
-  sender?: { id: number; username: string; email?: string };
-  receiver?: { id: number; username: string; email?: string };
+  createdAt?: string;
+  sender?: { id: string; username: string; email?: string };
+  receiver?: { id: string; username: string; email?: string };
 }
 
 // Stores
 export const users = writable<User[]>([]);
-export const messages = writable<Record<number, Message[]>>({});
-export const activeReceiverId = writable<number | null>(null);
+export const messages = writable<Record<string, Message[]>>({});
+export const activeReceiverId = writable<string | null>(null);
 
 // Add message utility
-export function addMessage(receiverId: number, msg: Message) {
+export function addMessage(receiverId: string, msg: Message) {
   messages.update((m) => {
     if (!m[receiverId]) {
       m[receiverId] = [];

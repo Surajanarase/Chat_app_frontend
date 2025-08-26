@@ -1,6 +1,11 @@
+import type { User } from "$lib/stores/chat";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export async function login(email: string, password: string) {
+export async function login(
+  email: string,
+  password: string
+): Promise<{ token: string; user: User }> {
   const res = await fetch(`${API_BASE_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -14,7 +19,7 @@ export async function register(
   username: string,
   email: string,
   password: string
-) {
+): Promise<{ token: string; user: User }> {
   const res = await fetch(`${API_BASE_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -25,7 +30,7 @@ export async function register(
 }
 
 // verify token and fetch current user
-export async function getCurrentUser(token: string) {
+export async function getCurrentUser(token: string): Promise<User> {
   const res = await fetch(`${API_BASE_URL}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
