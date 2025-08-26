@@ -13,7 +13,7 @@
   let loading = writable(false);
 
   const handleLogin = async () => {
-    // Validate with Joi
+    //Validate with Joi
     const { error } = loginSchema.validate({ email, password }, { abortEarly: false });
 
     if (error) {
@@ -29,24 +29,20 @@
     loading.set(true);
 
     try {
-      const data = await login(email, password);
-
-      if (!data?.token) {
-        errors.set({ general: data.error || "Login failed" });
-        return;
-      }
+      // API call
+      const { token, user } = await login(email, password);
 
       // Save session
-      setSession(data.token, data.user);
+      setSession(token, user);
 
-      // Join socket room
-      joinUserRoom(data.user.id);
+      //  Join socket room
+      joinUserRoom(user.id);
 
-      // Redirect
+      //  Redirect to chat
       goto("/chat");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login error:", err);
-      errors.set({ general: "Something went wrong, try again." });
+      errors.set({ general: err.message || "Login failed. Try again." });
     } finally {
       loading.set(false);
     }
@@ -61,19 +57,31 @@
       <!-- Email -->
       <div>
         <label for="email" class="block mb-1">Email</label>
-        <input id="email" type="email" bind:value={email}
+        <input
+          id="email"
+          type="email"
+          bind:value={email}
           placeholder="Enter email"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600" />
-        {#if $errors.email}<p class="text-red-400 text-sm mt-1">{$errors.email}</p>{/if}
+          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
+        />
+        {#if $errors.email}
+          <p class="text-red-400 text-sm mt-1">{$errors.email}</p>
+        {/if}
       </div>
 
       <!-- Password -->
       <div>
         <label for="password" class="block mb-1">Password</label>
-        <input id="password" type="password" bind:value={password}
+        <input
+          id="password"
+          type="password"
+          bind:value={password}
           placeholder="Enter password"
-          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600" />
-        {#if $errors.password}<p class="text-red-400 text-sm mt-1">{$errors.password}</p>{/if}
+          class="w-full p-2 rounded bg-gray-700 text-white border border-gray-600"
+        />
+        {#if $errors.password}
+          <p class="text-red-400 text-sm mt-1">{$errors.password}</p>
+        {/if}
       </div>
 
       <!-- General errors -->
@@ -82,11 +90,28 @@
       {/if}
 
       <!-- Submit button -->
-      <button type="submit"
+      <button
+        type="submit"
         class="w-full p-2 mt-4 bg-blue-600 hover:bg-blue-700 rounded font-semibold"
-        disabled={$loading}>
-        {#if $loading}Logging in...{:else}Login{/if}
+        disabled={$loading}
+      >
+        {#if $loading}
+          Logging in...
+        {:else}
+          Login
+        {/if}
       </button>
     </form>
+
+    <!-- Register link below login -->
+    <p class="text-center text-sm text-gray-400 mt-4">
+      Don’t have an account?
+      <a
+        href="/register"
+        class="text-blue-400 font-medium hover:underline"
+      >
+        Register here
+      </a>
+    </p>
   </div>
 </div>
